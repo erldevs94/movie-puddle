@@ -11,8 +11,16 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
+    "@nuxtjs/tailwindcss": "^6.10.1",
     "nuxt": "^3.8.2",
+    "nuxt-icon": "^0.6.7",
+    "sass": "^1.69.5",
     "vue": "^3.3.10",
     "vue-router": "^4.2.5"
+  },
+  "dependencies": {
+    "flowbite": "^2.2.0",
+    "node-fetch": "^2.7.0",
+    "vue-meta": "^3.0.0-alpha.2"
   }
 }
