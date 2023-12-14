@@ -11,22 +11,21 @@
                 </path>
             </svg>
         </button>
-
         <aside id="default-sidebar"
             class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
             aria-label="Sidebar" style="width:4.5rem;">
             <div id="nav-bg" class="h-full px-3 py-4 overflow-y-auto">
                 <ul class="flex flex-col font-medium h-[calc(100%-1rem)] justify-evenly space-y-2">
                     <li class="text-center">
-                       <a href="/">
-                        <button class="rounded-full border-b-2 border-yellow-300">
-                            <Icon class="w-full nav-icons" style="height: 24px; width: 30px;" name="ph:house"
-                                color="white" />
-                            <span class="_nav-text">Home</span>
-                        </button>
-                       </a>
+                        <NuxtLink to="/">
+                            <button class="rounded-full border-b-2 border-yellow-300">
+                                <Icon class="w-full nav-icons" style="height: 24px; width: 30px;" name="ph:house"
+                                    color="white" />
+                                <span class="_nav-text">Home</span>
+                            </button>
+                        </NuxtLink>
                     </li>
-                    <li class="text-center">
+                    <!-- <li class="text-center">
                         <button class="rounded-full border-b-2 border-yellow-300">
                             <Icon class="w-full nav-icons" style="height: 24px; width: 30px;" name="ph:flame"
                                 color="white" />
@@ -39,20 +38,85 @@
                                 color="white" />
                             <span class="_nav-text">Trending</span>
                         </button>
+                    </li> -->
+                    <li class="text-center"> 
+                        <button data-modal-target="custom-modal" data-modal-toggle="custom-modal"
+                            class="rounded-full border-b-2 border-yellow-300">
+                            <Icon class="w-full nav-icons" style="height: 24px; width: 30px;" name="ph:magnifying-glass"
+                                color="white" />
+                            <span class="_nav-text">Search</span>
+
+                        </button> 
                     </li>
                 </ul>
             </div>
         </aside>
+        <div id="custom-modal" tabindex="-1" aria-hidden="true"
+            class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+            <div class="relative p-4 w-full max-w-2xl max-h-full">
+                
+                <input type="text" v-model="text_search" @keyup.enter="searchMovie"
+                    class="bg-gray-50 block border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:border-blue-500 dark:focus:ring-blue-500 dark:placeholder-gray-400 dark:text-white focus:border-blue-500 focus:ring-blue-500 left-5 p-2.5 rounded-lg text-gray-900 text-sm w-full"
+                    placeholder="Search a movie" />
+                    <p id="helper-text-explanation" class="mt-2 text-sm font-bold text-white">Press enter to search.</p>
+            </div>
+        </div>
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
+import { ref } from 'vue';
 
+const page = ref(1);
+const props = defineProps<{
+    movieList: {}[],
+}>();
+
+const text_search = ref("");
+
+const runtimeConfig = useRuntimeConfig();
+const model = computed({
+    get: () => { props.movieList },
+    set: (newVal) => {
+        return newVal
+    }
+})
+const results = ref(await useAsyncData(
+    'search_results',
+    () => $fetch(`${runtimeConfig.public.apiBase}/3/search/movie?query=${text_search}&include_adult=false&language=en-US&page=${page}`, {
+        method: 'GET',
+        headers: {
+            accept: 'application/json',
+            Authorization: `Bearer ${runtimeConfig.public.accessAuthToken}`
+        },
+        params: {
+            query: text_search.value,
+            page: page.value
+        }
+    }), {
+    watch: [text_search, page]
+}
+))
+
+const searchMovie =() => {
+    return navigateTo({
+    path: '/posts/',
+    query: {
+        title: text_search.value
+    }
+  })
+}
+
+const refresh = () => refreshNuxtData("results_data");   
 </script>
 
 <style lang="scss" scoped>
+._search-movie {
+    width: 15rem;
+}
+
 #nav-bg {
-    background-color:  rgb(13 17 32);
+    background-color: rgb(13 17 32);
 }
 
 ._nav-icons {
@@ -78,12 +142,16 @@
 ul li button:hover span {
     opacity: 1;
     --scale: 1;
-} 
-ul li button{ 
+}
+
+ul li button {
     transition: 0.15s ease;
 }
+
 ul li button:hover,
 ul li button:focus,
 ul li button:active {
-    background-color:  rgb(13 17 32);
-}</style>
+    background-color: rgb(180, 156, 70);
+    color: rgb(13 17 32);
+}
+</style>

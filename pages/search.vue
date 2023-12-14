@@ -1,12 +1,14 @@
 <template>
     <div>
-        <h1 class="text-white">Trending Movies</h1>
-        <div class="fixed bottom-10 right-10 z-10 align-center text-white" style="background-color: #0d1120;">
+        <input type="text" v-model="text_search"
+                        class="absolute bg-gray-50 block border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:border-blue-500 dark:focus:ring-blue-500 dark:placeholder-gray-400 dark:text-white focus:border-blue-500 focus:ring-blue-500 left-5 p-2.5 rounded-lg text-gray-900 text-sm w-full"
+                        placeholder="Search a movie" />
+        <div class="fixed bottom-10 right-10 flex z-50 align-center text-white">
             <button :disabled="page==1" @click="page--" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-1">
                 Prev
             </button>
-            <span>Page {{ page }} of {{ total_page }}</span>
-            <button @click="page++" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-1">
+            <span>Page {{ page }} of {{ results.data.total_pages }}</span>
+            <button :disabled="page==results.data.total_pages" @click="page++" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-1">
                 Next
             </button> 
 
@@ -19,7 +21,7 @@
                     <strong class="absolute top-2 right-2 _desc-color rating">{{ item.vote_average.toFixed(2) }} /
                         10</strong>
                 </a>
-                <div class="p-5  _desc-color" style="background-color: #0d1120;">
+                <div class="p-5  _desc-color" style="background-color: rgb(13 17 32);">
                     <a href="#">
                         <h5 class="mb-2 text-2xl font-bold tracking-tight  _desc-color">{{
                             item.original_title }}</h5>
@@ -32,33 +34,33 @@
     </div>
 </template>
 
-<script lang="ts" module="es2022" setup>
-import { refreshNuxtData, useAsyncData } from 'nuxt/app';
-import { onMounted, ref, reactive } from 'vue';
+<script lang="ts" setup>
+import { ref, computed } from 'vue';
+const route = useRoute()
+
+const page = ref(1); 
+
+const text_search = ref("");
+
 const runtimeConfig = useRuntimeConfig(); 
-const page = ref(1);
-const total_page = ref(0);
-const { data: results } = await useAsyncData(
+const results = ref(await useAsyncData(
     'results_data',
-    () => $fetch(`${runtimeConfig.public.apiBase}/3/trending/movie/day?language=en-US&page=${page}`, {
+    () => $fetch(`${runtimeConfig.public.apiBase}/3/search/movie?query=${text_search}&include_adult=false&language=en-US&page=${page}`, {
         method: 'GET',
         headers: {
             accept: 'application/json',
             Authorization: `Bearer ${runtimeConfig.public.accessAuthToken}`
         },
         params: {
+            query: text_search.value,
             page: page.value
         }
     }), {
-    watch: [page]
+    watch: [text_search, page]
 }
-)
-var movie_list:[] = computed(() => results.value.results);
-
-total_page.value = results.value.total_pages
-
-const refresh = () => refreshNuxtData("results_data"); 
-
+))
+var movie_list = computed(() => results.value.data.results);
+const refresh = () => refreshNuxtData("results_data");   
 </script>
 
 <style lang="scss" scoped>._desc-color {
